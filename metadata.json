@@ -1,0 +1,6 @@
+{
+  "name": "PulseWatch: Laravel APM & Diagnostics",
+  "description": "Real-time Laravel application monitoring, error tracking, query bottleneck profiling, and automated code fixes inspired by Telescope, Pulse, Sentry, and Nightwatch.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
