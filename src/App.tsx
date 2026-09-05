@@ -21,7 +21,7 @@ import { LaravelRecipeModal } from "./components/LaravelRecipeModal";
 import { EnterpriseRoadmapModal } from "./components/EnterpriseRoadmapModal";
 import { LaravelFixRecipe } from "./data/laravelRecipes";
 import { TelemetryEvent, APMStats, Project } from "./types";
-import { INITIAL_EVENTS, INITIAL_STATS, INITIAL_PROJECTS } from "./data/initialTelemetry";
+import { INITIAL_EVENTS, INITIAL_STATS, INITIAL_PROJECTS, APPLICATION_DOMAINS } from "./data/initialTelemetry";
 
 // Safe JSON fetcher that verifies HTTP status and content-type to avoid '<!doctype' HTML JSON parse errors
 async function fetchJsonSafe<T>(url: string): Promise<T | null> {
@@ -42,7 +42,8 @@ export default function App() {
   const [stats, setStats] = useState<APMStats | null>(INITIAL_STATS);
   const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [selectedProject, setSelectedProject] = useState<string>("beekman");
-  const [activeTab, setActiveTab] = useState<string>("monitoring");
+  const [selectedDomain, setSelectedDomain] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<string>("performance");
   const [performanceSubtab, setPerformanceSubtab] = useState<"profiler" | "queries">("profiler");
   const [toolboxSubtab, setToolboxSubtab] = useState<"debug" | "jobs" | "sentinel">("debug");
   const [profilerSelectedRequestId, setProfilerSelectedRequestId] = useState<string | null>(null);
@@ -223,9 +224,24 @@ export default function App() {
     }
   };
 
-  // Project filtering
+  // Domain & Project filtering
   const visibleEvents = useMemo(() => {
-    if (selectedProject === "all") return events;
+    let filtered = events;
+
+    // Filter by specific domain if not "all"
+    if (selectedDomain !== "all") {
+      filtered = filtered.filter((e) => {
+        const dom = e.metadata?.domain?.toLowerCase();
+        if (!dom) return false;
+        return dom === selectedDomain.toLowerCase() || 
+               dom.includes(selectedDomain.toLowerCase()) || 
+               selectedDomain.toLowerCase().includes(dom);
+      });
+      return filtered;
+    }
+
+    // Default project filtering when domain is "all"
+    if (selectedProject === "all") return filtered;
     const activeProject = projects.find(
       (p) => p.slug === selectedProject || p.id === selectedProject
     );
@@ -233,7 +249,7 @@ export default function App() {
       ? activeProject.domains.map((d) => d.toLowerCase())
       : [];
 
-    return events.filter((e) => {
+    return filtered.filter((e) => {
       const proj = e.metadata?.project?.toLowerCase();
       const dom = e.metadata?.domain?.toLowerCase();
 
@@ -268,7 +284,7 @@ export default function App() {
 
       return false;
     });
-  }, [events, selectedProject, projects]);
+  }, [events, selectedDomain, selectedProject, projects]);
 
   const exceptionEvents = visibleEvents.filter((e) => e.type === "exception");
   const queryEvents = visibleEvents.filter((e) => e.type === "query");
@@ -294,10 +310,13 @@ export default function App() {
         projects={projects}
         selectedProject={selectedProject}
         onSelectProject={setSelectedProject}
+        selectedDomain={selectedDomain}
+        onSelectDomain={setSelectedDomain}
+        availableDomains={APPLICATION_DOMAINS}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
+      {/* Main Container: Wide container matching DevStack dashboard width */}
+      <main className="flex-1 max-w-[1720px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
         {/* KPI / Vital Signs Pulse Banner */}
         <MetricCards stats={stats} onSelectTab={handleSelectTab} />
 
@@ -462,8 +481,8 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/60 py-4 px-4 lg:px-8 mt-auto">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-slate-400">
+      <footer className="border-t border-slate-900 bg-slate-950/60 py-4 px-4 sm:px-6 lg:px-8 mt-auto">
+        <div className="max-w-[1720px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-slate-400">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
             <span>Laravel APM & Profiler • Real-time Docker Telemetry & Profiling</span>

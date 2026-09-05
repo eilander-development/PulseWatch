@@ -17,9 +17,16 @@ import {
   Layers,
   Code2,
   Shield,
-  Terminal
+  Terminal,
+  Globe
 } from "lucide-react";
 import { APMStats, Project } from "../types";
+
+export interface ApplicationDomainOption {
+  domain: string;
+  label: string;
+  count?: number;
+}
 
 interface HeaderProps {
   stats: APMStats | null;
@@ -35,6 +42,9 @@ interface HeaderProps {
   projects?: Project[];
   selectedProject?: string;
   onSelectProject?: (slug: string) => void;
+  selectedDomain?: string;
+  onSelectDomain?: (domain: string) => void;
+  availableDomains?: ApplicationDomainOption[];
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -50,12 +60,24 @@ export const Header: React.FC<HeaderProps> = ({
   setEnvironment,
   projects = [],
   selectedProject = "all",
-  onSelectProject = (_slug: string) => {}
+  onSelectProject = (_slug: string) => {},
+  selectedDomain = "all",
+  onSelectDomain = (_dom: string) => {},
+  availableDomains = [
+    { domain: "all", label: "Alle domeinen (5)" },
+    { domain: "partsnl.local", label: "partsnl.local (Shop)" },
+    { domain: "ersatzteileshop.local", label: "ersatzteileshop.local (DE)" },
+    { domain: "onderdelen.local", label: "onderdelen.local (NL)" },
+    { domain: "beekman.local", label: "beekman.local (B2B)" },
+    { domain: "rest.beekman.local", label: "rest.beekman.local (API)" }
+  ]
 }) => {
   const [copiedUrl, setCopiedUrl] = useState(false);
 
   const activeProj = projects.find((p) => p.slug === selectedProject);
-  const activeDomain = activeProj?.domains?.[0] || (selectedProject !== "all" ? `${selectedProject}.local` : "beekman.local");
+  const activeDomain = selectedDomain !== "all" 
+    ? selectedDomain 
+    : (activeProj?.domains?.[0] || "partsnl.local");
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(`https://${activeDomain}`);
@@ -66,11 +88,11 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="border-b border-[#182236] bg-[#090d16]/95 backdrop-blur-md sticky top-0 z-30 transition-colors">
       {/* Top Manager Browser Navigation Bar */}
-      <div className="border-b border-[#141b2d] px-4 lg:px-8 py-2.5 bg-[#060911]/80">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="border-b border-[#141b2d] px-4 sm:px-6 lg:px-8 py-2.5 bg-[#060911]/80">
+        <div className="max-w-[1720px] mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
           {/* Breadcrumb & Project Browser Input */}
           <div className="flex items-center gap-2.5 flex-1 min-w-[280px]">
-            <span className="text-slate-500 font-mono hidden md:inline">Dashboard &gt; Project</span>
+            <span className="text-slate-500 font-mono hidden md:inline">Applicatie &gt; Beekman Multi-Shop</span>
             
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0e1424] border border-[#1b253d] flex-1 max-w-xl shadow-inner text-slate-300">
               <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -124,8 +146,8 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Bar with Project Controls & Telemetry Actions */}
-      <div className="px-4 lg:px-8 py-3">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div className="px-4 sm:px-6 lg:px-8 py-3">
+        <div className="max-w-[1720px] mx-auto flex flex-wrap items-center justify-between gap-3">
           {/* Brand & Collector Title */}
           <div className="flex items-center gap-3">
             <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500/20 to-teal-600/15 border border-blue-500/30 text-blue-400 shadow-md shadow-blue-950/40">
@@ -149,21 +171,18 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Status Indicators & Action Controls */}
           <div className="flex items-center flex-wrap gap-2">
-            {/* Project Selector Dropdown */}
-            <div className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#0e1424] border border-[#1b253d] text-xs font-mono">
-              <FolderGit2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            {/* Domain Selector Dropdown (Multi-Domein per Applicatie) */}
+            <div className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#0e1424] border border-[#1b253d] text-xs font-mono group hover:border-blue-500/40 transition">
+              <Globe className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <select
-                value={selectedProject}
-                onChange={(e) => onSelectProject(e.target.value)}
-                aria-label="Selecteer project"
-                className="bg-transparent text-slate-200 text-xs font-mono focus:outline-none cursor-pointer pr-1"
+                value={selectedDomain}
+                onChange={(e) => onSelectDomain(e.target.value)}
+                aria-label="Selecteer domein binnen applicatie"
+                className="bg-transparent text-slate-200 text-xs font-mono focus:outline-none cursor-pointer pr-1 font-medium"
               >
-                <option value="all" className="bg-slate-900 text-slate-200">
-                  Alle Projecten ({projects.length})
-                </option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.slug} className="bg-slate-900 text-slate-200">
-                    {p.name} ({p.domains.length} dom)
+                {availableDomains.map((d) => (
+                  <option key={d.domain} value={d.domain} className="bg-slate-900 text-slate-200">
+                    {d.label}
                   </option>
                 ))}
               </select>

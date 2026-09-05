@@ -34,9 +34,12 @@ export interface ExplainPlan {
   select_type: string;
   table: string;
   type: string;
-  possible_keys?: string | null;
+  possible_keys?: string | string[] | null;
   key?: string | null;
-  rows_examined: number;
+  rows_examined?: number;
+  rows?: number;
+  filtered?: number;
+  extra?: string;
   cost?: string;
 }
 

@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { LARAVEL_RECIPES, LaravelFixRecipe } from "./src/data/laravelRecipes";
+import { RUN_160_REQ_216_QUERIES, RUN_160_REQ_217_QUERIES } from "./src/data/devstackRun160";
 
 dotenv.config();
 
@@ -52,6 +53,23 @@ let telemetryEvents: TelemetryEvent[] = [
       middleware_chain: {
         before: ["web", "safesefparts", "extraheaders", "force.noss1"],
         after: ["force.noss1", "extraheaders", "safesefparts", "web"]
+      },
+      laravel_context: {
+        markers: {
+          provider_ready: 7943823,
+          laravel_booted: 60806335,
+          before_middleware_started: 60808837,
+          route_matched: 62393354,
+          action_started: 88496961,
+          controller_started: 88513547,
+          controller_finished: 350660175,
+          preparing_response: 458022538,
+          render_started: 350681108,
+          response_prepared: 458071669,
+          after_middleware_started: 446571846,
+          sending_started: 458116629,
+          request_handled: 458119628
+        }
       },
       lifecycle_phases: {
         bootstrap_ms: 7.8,
@@ -149,40 +167,7 @@ let telemetryEvents: TelemetryEvent[] = [
           context: "vanuit GET /api/availability"
         }
       ],
-      queries: [
-        {
-          id: "q-part-1",
-          sql: "SELECT `id`, `domain_id`, `meta_title`, `canonical_url` FROM `seo_configurations` WHERE `domain_id` = ? AND `path` = ? LIMIT 1",
-          durationMs: 29.3,
-          origin: "app/Providers/RouteServiceProvider.php:120 · App\\Providers\\RouteServiceProvider::defineWebType · GET /aansluitmateriaal/gas",
-          bindings: [1, "/aansluitmateriaal/gas"]
-        },
-        {
-          id: "q-part-2",
-          sql: "SELECT `id`, `article_id`, `price`, `type` FROM `article_prices` WHERE `article_id` IN (?, ?, ?, ?, ?, ?, ?, ?)",
-          durationMs: 30.1,
-          origin: "app/Libraries/ArticleLibrary.php:658 · Beekman\\Shops\\Services\\BeekmanPriceCalculation::initializeArticlePriceCache",
-          is_duplicate: true,
-          duplicate_count: 8,
-          bindings: [10482, 10483, 10484, 10485, 10486, 10487, 10488, 10489]
-        },
-        {
-          id: "q-part-3",
-          sql: "SELECT * FROM `configurations` WHERE `shop_id` = ? AND `active` = 1",
-          durationMs: 14.8,
-          origin: "app/Services/Config.php:43 · App\\Services\\Config::retrieveConfigValues",
-          bindings: [4]
-        },
-        {
-          id: "q-part-4",
-          sql: "SELECT `id`, `category_id`, `image_path` FROM `category_images` WHERE `category_id` IN (?, ?, ?, ?)",
-          durationMs: 23.4,
-          origin: "app/Services/Traits/GetIndex.php:3416 · App\\Services\\Category\\Levels::getNextImages",
-          is_duplicate: true,
-          duplicate_count: 4,
-          bindings: [204, 205, 206, 207]
-        }
-      ],
+      queries: RUN_160_REQ_216_QUERIES,
       breakdown: {
         database_pct: 61,
         external_pct: 0,
@@ -219,6 +204,7 @@ let telemetryEvents: TelemetryEvent[] = [
       db_time_ms: 244.8,
       external_http_time_ms: 0,
       php_execution_time_ms: 157.7,
+      queries: RUN_160_REQ_217_QUERIES,
       controller: "App\\Http\\Controllers\\Frontend\\DiyController@index",
       route_pattern: "GET /doe-het-zelf",
       domain: "partsnl.local",
@@ -228,6 +214,23 @@ let telemetryEvents: TelemetryEvent[] = [
       middleware_chain: {
         before: ["web", "safesefparts"],
         after: ["safesefparts", "web"]
+      },
+      laravel_context: {
+        markers: {
+          provider_ready: 8192000,
+          laravel_booted: 50290000,
+          before_middleware_started: 50310000,
+          route_matched: 68700000,
+          action_started: 78900000,
+          controller_started: 79000000,
+          controller_finished: 359000000,
+          preparing_response: 402200000,
+          render_started: 359100000,
+          response_prepared: 402300000,
+          after_middleware_started: 393200000,
+          sending_started: 402450000,
+          request_handled: 402500000
+        }
       },
       lifecycle_phases: {
         bootstrap_ms: 8.2,
@@ -291,637 +294,131 @@ let telemetryEvents: TelemetryEvent[] = [
     }
   },
   {
-    id: "EXAMPLE-REQUEST-0001",
-    type: "exception",
-    timestamp: Date.now() - 1000 * 60 * 1,
-    level: "critical",
-    title: "RuntimeException: Order processing failed",
-    message: "Order processing failed in OrderProcessingService.php:142",
-    durationMs: 152.4,
-    metadata: {
-      project: "beekman",
-      domain: "shop.local",
-      exception_class: "RuntimeException",
-      file: "app/Services/OrderProcessingService.php",
-      line: 142,
-      raw_exception: {
-        class: "RuntimeException",
-        code: 0,
-        message: "Order processing failed",
-        file: "app/Services/OrderProcessingService.php",
-        line: 142,
-        snippet: {
-          file: "app/Services/OrderProcessingService.php",
-          line: 142,
-          lines: {
-            "137": "        DB::beginTransaction();",
-            "138": "",
-            "139": "        $order = Order::lockForUpdate()->findOrFail($orderId);",
-            "140": "        $inventory = Inventory::where('product_id', $order->product_id)",
-            "141": "            ->lockForUpdate()->firstOrFail();",
-            "142": "        throw new RuntimeException('Order processing failed');",
-            "143": "",
-            "144": "        $order->update(['status' => 'processing']);",
-            "145": "        DB::commit();",
-            "146": "    }"
-          }
-        }
-      },
-      code_snippet: [
-        { line: 137, code: "        DB::beginTransaction();" },
-        { line: 139, code: "        $order = Order::lockForUpdate()->findOrFail($orderId);" },
-        { line: 140, code: "        $inventory = Inventory::where('product_id', $order->product_id)" },
-        { line: 141, code: "            ->lockForUpdate()->firstOrFail();" },
-        { line: 142, code: "        throw new RuntimeException('Order processing failed');", highlight: true },
-        { line: 144, code: "        $order->update(['status' => 'processing']);" },
-        { line: 145, code: "        DB::commit();" }
-      ],
-      breadcrumbs: [
-        { type: "request", message: "POST /api/v1/orders/48102/process", offset_ms: 0 },
-        { type: "route", message: "POST /api/v1/orders/{order}/process", offset_ms: 31 },
-        { type: "auth", message: "Authenticated user a94a8fe5ccb1 (auth:sanctum)", offset_ms: 40 },
-        { type: "http", message: "GET https://inventory.example.test/products/{value} [200, 31.40ms]", offset_ms: 73 },
-        { type: "query", message: "18 queries [64.70ms total], last: update orders set status = ? where id = ? [4.20ms]", offset_ms: 117 },
-        { type: "warning", message: "warning: Order processing required a retry", offset_ms: 128 },
-        { type: "exception", message: "RuntimeException: Order processing failed", offset_ms: 151 }
-      ],
-      request: {
-        method: "POST",
-        url: "/api/v1/orders/48102/process",
-        status: 500,
-        user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        ip: "192.168.1.144",
-        user_id: "a94a8fe5ccb1",
-        user_email: "operator@shop.local"
-      },
-      auth_user: {
-        id: "a94a8fe5ccb1",
-        guard: "auth:sanctum"
-      },
-      db_queries_count: 18,
-      db_time_ms: 64.7,
-      external_http_time_ms: 31.4,
-      models_count: 5,
-      occurrences_last_24h: 12,
-      affected_users: 7,
-      status: "unresolved",
-      tags: { env: "local", release: "v2.15.0", profile: "full", source_id: "web:100" }
-    }
-  },
-  {
-    id: "evt-err-03",
-    type: "exception",
-    timestamp: Date.now() - 1000 * 60 * 7,
-    level: "critical",
-    title: "[Vue warn]: Unhandled error during execution of render function in <OrderHistory.vue>",
-    message: "TypeError: Cannot read properties of undefined (reading 'items') at Proxy.render (resources/js/Pages/Orders/OrderHistory.vue:48:22)",
-    metadata: {
-      project: "backoffice",
-      domain: "backoffice.test",
-      client_framework: "vue",
-      vue_component: "OrderHistory.vue",
-      related_trace_id: "req-v-77821",
-      exception_class: "VueRenderException",
-      file: "resources/js/Pages/Orders/OrderHistory.vue",
-      line: 48,
-      code_snippet: [
-        { line: 45, code: "  <template #body>" },
-        { line: 46, code: "    <div class=\"space-y-4\">" },
-        { line: 47, code: "      <h3 class=\"text-lg font-bold\">Bestelregels</h3>" },
-        { line: 48, code: "      <div v-for=\"item in order.items\" :key=\"item.id\">", highlight: true },
-        { line: 49, code: "        <span>{{ item.product_name }}</span>" }
-      ],
-      breadcrumbs: [
-        { category: "navigation", message: "Inertia.visit('/orders/48102')", time: "-180ms" },
-        { category: "request", message: "GET /orders/48102 (Status 200)", time: "-90ms" },
-        { category: "ui", message: "User clicked tab 'Geschiedenis & Regels'", time: "-20ms" },
-        { category: "exception", message: "Order data prop missing `items` relation key in Inertia payload", time: "0ms" }
-      ],
-      request: {
-        method: "GET",
-        url: "/orders/48102",
-        status: 500,
-        user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0",
-        ip: "10.0.4.12",
-        user_id: 88,
-        user_email: "operator@backoffice.test"
-      },
-      occurrences_last_24h: 19,
-      affected_users: 7,
-      status: "unresolved",
-      tags: { env: "local", framework: "Vue 3.4 + Inertia.js" }
-    }
-  },
-  {
-    id: "evt-err-04",
-    type: "exception",
-    timestamp: Date.now() - 1000 * 60 * 14,
-    level: "critical",
-    title: "GuzzleHttp\\Exception\\ConnectException: Connection refused to rest.beekman.local:8080",
-    message: "cURL error 7: Failed to connect to rest.beekman.local port 8080: Connection refused (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for http://rest.beekman.local:8080/v1/stock/bulk-check",
-    metadata: {
-      project: "beekman",
-      domain: "partsnl.local",
-      exception_class: "GuzzleHttp\\Exception\\ConnectException",
-      file: "app/Services/BeekmanRestApiClient.php",
-      line: 82,
-      code_snippet: [
-        { line: 79, code: "        $client = new Client(['base_uri' => config('services.beekman.rest_url')]);" },
-        { line: 80, code: "        $response = $client->post('/v1/stock/bulk-check', [" },
-        { line: 81, code: "            'json' => ['article_numbers' => $articleNumbers]," },
-        { line: 82, code: "            'timeout' => 2.0", highlight: true },
-        { line: 83, code: "        ]);" }
-      ],
-      breadcrumbs: [
-        { category: "request", message: "GET /winkelmand (partsnl.local)", time: "-240ms" },
-        { category: "db", message: "SELECT * FROM `cart_items` WHERE `session_id` = 'cart_9918' [2.1ms]", time: "-190ms" },
-        { category: "http", message: "POST http://rest.beekman.local:8080/v1/stock/bulk-check", time: "-100ms" },
-        { category: "exception", message: "ConnectException: Connection refused [Errno 111]", time: "0ms" }
-      ],
-      request: {
-        method: "GET",
-        url: "/winkelmand",
-        status: 500,
-        user_agent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X)",
-        ip: "82.161.44.19",
-        user_id: 3102,
-        user_email: "klant@partsnl.nl"
-      },
-      occurrences_last_24h: 88,
-      affected_users: 64,
-      status: "unresolved",
-      tags: { env: "local", subsystem: "ERP Stock Gateway" }
-    }
-  },
-  {
-    id: "evt-qry-01",
-    type: "query",
-    timestamp: Date.now() - 1000 * 60 * 6,
-    level: "warning",
-    title: "N+1 Query Bottleneck: App\\Models\\Order -> items.product",
-    message: "Executed 68 duplicated queries in single HTTP request: `select * from order_items where order_id = ?` and `select * from products where id = ?`",
-    durationMs: 840,
-    metadata: {
-      project: "beekman",
-      domain: "partsnl.local",
-      sql: "SELECT * FROM `order_items` WHERE `order_items`.`order_id` = ? AND `order_items`.`order_id` IS NOT NULL LIMIT 1",
-      execution_count: 68,
-      total_time_ms: 682,
-      origin: "App\\Http\\Controllers\\Api\\DashboardController::recentOrders (line 48)",
-      code_snippet: [
-        { line: 45, code: "    public function recentOrders() {" },
-        { line: 46, code: "        $orders = Order::where('created_at', '>=', now()->subDays(7))->get();" },
-        { line: 47, code: "        return $orders->map(function ($order) {" },
-        { line: 48, code: "            return ['id' => $order->id, 'total' => $order->items->sum('price')]; // N+1 triggered here!", highlight: true },
-        { line: 49, code: "        });" }
-      ],
-      explain_plan: {
-        select_type: "SIMPLE",
-        table: "order_items",
-        type: "ref",
-        possible_keys: "order_items_order_id_foreign",
-        key: "order_items_order_id_foreign",
-        rows_examined: 340,
-        cost: "112.5"
-      },
-      tags: { route: "GET /api/v1/dashboard/recent-orders", framework: "Laravel 11.x" }
-    }
-  },
-  {
-    id: "evt-qry-02",
-    type: "query",
-    timestamp: Date.now() - 1000 * 60 * 12,
-    level: "warning",
-    title: "N+1 Bottleneck: App\\Models\\User -> department & permissions",
-    message: "Executed 48 duplicate queries in loop for route GET /api/v1/users/roster: `select * from departments where id = ?` (48x)",
-    durationMs: 384,
-    metadata: {
-      sql: "SELECT * FROM `departments` WHERE `id` = ? LIMIT 1",
-      execution_count: 48,
-      total_time_ms: 384,
-      avg_time_ms: 8.0,
-      origin: "App\\Http\\Controllers\\UserController::roster (line 35)",
-      code_snippet: [
-        { line: 33, code: "    public function roster() {" },
-        { line: 34, code: "        $users = User::where('active', true)->get();" },
-        { line: 35, code: "        return $users->map(fn($u) => ['name' => $u->name, 'dept' => $u->department->name]);", highlight: true },
-        { line: 36, code: "    }" }
-      ],
-      explain_plan: {
-        select_type: "SIMPLE",
-        table: "departments",
-        type: "eq_ref",
-        possible_keys: "PRIMARY",
-        key: "PRIMARY",
-        rows_examined: 48,
-        cost: "16.8"
-      },
-      tags: { route: "GET /api/v1/users/roster", framework: "Laravel 11.x" }
-    }
-  },
-  {
-    id: "evt-req-01",
+    id: "evt-req-rest-01",
     type: "request",
-    timestamp: Date.now() - 1000 * 60 * 1,
-    level: "warning",
-    title: "GET /api/v1/reports/revenue-monthly",
-    durationMs: 2450,
+    timestamp: Date.now() - 1000 * 60 * 5,
+    level: "info",
+    title: "GET /v1/articles/search?q=gasslang",
+    durationMs: 185.2,
     metadata: {
       project: "beekman",
-      domain: "beekman.local",
+      domain: "rest.beekman.local",
       status: 200,
-      memory_peak_mb: 74.2,
-      db_queries_count: 42,
-      db_time_ms: 1820,
-      external_http_time_ms: 320,
-      php_execution_time_ms: 310,
-      controller: "App\\Http\\Controllers\\ReportController@monthlyRevenue",
-      middleware: ["web", "auth:sanctum", "throttle:60,1"],
+      memory_peak_mb: 14.5,
+      db_queries_count: 14,
+      db_time_ms: 48.2,
+      external_http_time_ms: 0,
+      php_execution_time_ms: 137.0,
+      controller: "App\\Http\\Controllers\\Api\\ArticleSearchController@search",
+      models_count: 48,
       breakdown: {
-        database_pct: 74,
-        external_pct: 13,
-        php_pct: 13
-      },
-      primary_bottleneck: {
-        category: "database",
-        label: "Slow Database Aggregate & Missing Index",
-        details: "42 queries executed taking 1,820ms (74% of total request time). Full table scan on `order_items` without composite index on (created_at, status).",
-        impact_pct: 74
+        database_pct: 26,
+        external_pct: 0,
+        php_pct: 74
       },
       spans: [
-        { id: "sp-1", name: "Laravel Framework Boot & Autoload", category: "boot", startMs: 0, durationMs: 22, details: "Kernel boot, service providers registered" },
-        { id: "sp-2", name: "Middleware Pipeline (auth:sanctum, throttle)", category: "middleware", startMs: 22, durationMs: 14, details: "Sanctum token verification, rate limit check" },
-        { id: "sp-3", name: "ReportController::monthlyRevenue", category: "controller", startMs: 36, durationMs: 2390, details: "Controller dispatch & data aggregation" },
-        { id: "sp-4", name: "SELECT FROM `orders` (Date range lookup)", category: "query", startMs: 50, durationMs: 420, details: "Scanning 24,000 orders in current quarter", sql: "SELECT * FROM `orders` WHERE `created_at` BETWEEN '2026-08-01' AND '2026-08-31' AND `status` = 'completed'" },
-        { id: "sp-5", name: "Aggregating Order Items & Tax calculations (N+1 loop)", category: "query", startMs: 480, durationMs: 1380, details: "41 sequential sub-queries in Eloquent loop", sql: "SELECT SUM(price) as total, order_id FROM `order_items` WHERE `order_id` IN (?) GROUP BY `order_id`" },
-        { id: "sp-6", name: "HTTP Guzzle: Currency Rates Exchange (ECB API)", category: "http", startMs: 1870, durationMs: 320, details: "GET https://api.exchangerates.io/latest?base=EUR", status: 200 },
-        { id: "sp-7", name: "Blade JSON Response & Serialization", category: "view", startMs: 2200, durationMs: 240, details: "Eloquent to JSON resource transformation (74.2 MB peak RAM)" }
+        { id: "sp-r1", name: "Laravel Boot & Auth", category: "boot", startMs: 0, durationMs: 16 },
+        { id: "sp-r2", name: "Redis Cache::get('articles:search:gasslang')", category: "cache", startMs: 16, durationMs: 1.2, details: "devstack-global-redis:6379 (HIT)" },
+        { id: "sp-r3", name: "ArticleSearchController@search", category: "controller", startMs: 18, durationMs: 152 },
+        { id: "sp-r4", name: "Hydrate 48 Article Models", category: "view", startMs: 170, durationMs: 15.2 }
       ],
       queries: [
-        {
-          id: "q-1",
-          sql: "SELECT * FROM `orders` WHERE `created_at` BETWEEN '2026-08-01' AND '2026-08-31' AND `status` = 'completed'",
-          durationMs: 420,
-          origin: "App\\Http\\Controllers\\ReportController::monthlyRevenue:34",
-          is_duplicate: false,
-          bindings: ["2026-08-01", "2026-08-31", "completed"],
-          explain_plan: { select_type: "SIMPLE", table: "orders", type: "ALL", possible_keys: "idx_orders_created", key: null, rows_examined: 48000, cost: "4200.0" }
-        },
-        {
-          id: "q-2",
-          sql: "SELECT `id`, `order_id`, `product_id`, `price` FROM `order_items` WHERE `order_id` = ?",
-          durationMs: 34,
-          origin: "App\\Http\\Controllers\\ReportController::monthlyRevenue:48",
-          is_duplicate: true,
-          bindings: [48102]
-        },
-        {
-          id: "q-3",
-          sql: "SELECT `id`, `order_id`, `product_id`, `price` FROM `order_items` WHERE `order_id` = ?",
-          durationMs: 32,
-          origin: "App\\Http\\Controllers\\ReportController::monthlyRevenue:48",
-          is_duplicate: true,
-          bindings: [48103]
-        },
-        {
-          id: "q-4",
-          sql: "SELECT `id`, `order_id`, `product_id`, `price` FROM `order_items` WHERE `order_id` = ?",
-          durationMs: 35,
-          origin: "App\\Http\\Controllers\\ReportController::monthlyRevenue:48",
-          is_duplicate: true,
-          bindings: [48104]
-        },
-        {
-          id: "q-5",
-          sql: "SELECT `id`, `order_id`, `product_id`, `price` FROM `order_items` WHERE `order_id` = ?",
-          durationMs: 31,
-          origin: "App\\Http\\Controllers\\ReportController::monthlyRevenue:48",
-          is_duplicate: true,
-          bindings: [48105]
-        },
-        {
-          id: "q-6",
-          sql: "SELECT `id`, `order_id`, `product_id`, `price` FROM `order_items` WHERE `order_id` = ?",
-          durationMs: 36,
-          origin: "App\\Http\\Controllers\\ReportController::monthlyRevenue:48",
-          is_duplicate: true,
-          bindings: [48106]
-        },
-        {
-          id: "q-7",
-          sql: "SELECT `id`, `order_id`, `product_id`, `price` FROM `order_items` WHERE `order_id` = ?",
-          durationMs: 30,
-          origin: "App\\Http\\Controllers\\ReportController::monthlyRevenue:48",
-          is_duplicate: true,
-          bindings: [48107]
-        },
-        {
-          id: "q-8",
-          sql: "SELECT * FROM `products` WHERE `id` = ? LIMIT 1",
-          durationMs: 12,
-          origin: "App\\Models\\OrderItem::product:14",
-          is_duplicate: true,
-          bindings: [901]
-        },
-        {
-          id: "q-9",
-          sql: "SELECT * FROM `products` WHERE `id` = ? LIMIT 1",
-          durationMs: 14,
-          origin: "App\\Models\\OrderItem::product:14",
-          is_duplicate: true,
-          bindings: [902]
-        },
-        {
-          id: "q-10",
-          sql: "SELECT * FROM `products` WHERE `id` = ? LIMIT 1",
-          durationMs: 11,
-          origin: "App\\Models\\OrderItem::product:14",
-          is_duplicate: true,
-          bindings: [903]
-        },
-        {
-          id: "q-11",
-          sql: "SELECT * FROM `products` WHERE `id` = ? LIMIT 1",
-          durationMs: 13,
-          origin: "App\\Models\\OrderItem::product:14",
-          is_duplicate: true,
-          bindings: [904]
-        },
-        {
-          id: "q-12",
-          sql: "SELECT `id`, `name`, `tax_rate` FROM `taxes` WHERE `country_code` = 'NL' LIMIT 1",
-          durationMs: 8,
-          origin: "App\\Services\\TaxService::calculate:19",
-          is_duplicate: false,
-          bindings: ["NL"]
-        }
-      ],
-      cache_operations: [
-        { key: "reports:monthly:2026-08", operation: "get", hit: false, durationMs: 2.1, store: "redis" },
-        { key: "exchange_rates:eur", operation: "remember", hit: true, durationMs: 0.8, store: "redis" }
-      ],
-      events_dispatched: [
-        { event: "Illuminate\\Auth\\Events\\Authenticated", listeners_count: 2, durationMs: 4 },
-        { event: "App\\Events\\ReportGenerated", listeners_count: 1, durationMs: 6 }
-      ],
-      gates_evaluated: [
-        { ability: "view-analytics", result: "allowed", user_id: 1042 },
-        { ability: "export-financial-reports", result: "allowed", user_id: 1042 }
-      ],
-      headers: {
-        "host": "app.laravel.internal",
-        "authorization": "Bearer 48|9xKj...***",
-        "accept": "application/json",
-        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
-      },
-      session_data: {
-        "user_id": 1042,
-        "team_id": 12,
-        "role": "financial_admin",
-        "locale": "nl_NL"
-      }
-    }
-  },
-  {
-    id: "evt-req-02",
-    type: "request",
-    timestamp: Date.now() - 1000 * 60 * 4,
-    level: "warning",
-    title: "POST /api/v1/checkout/process",
-    durationMs: 1840,
-    metadata: {
-      status: 200,
-      memory_peak_mb: 28.5,
-      db_queries_count: 12,
-      db_time_ms: 190,
-      external_http_time_ms: 1450,
-      php_execution_time_ms: 200,
-      controller: "App\\Http\\Controllers\\CheckoutController@process",
-      middleware: ["api", "auth:sanctum", "throttle:checkout"],
-      breakdown: {
-        database_pct: 10,
-        external_pct: 79,
-        php_pct: 11
-      },
-      primary_bottleneck: {
-        category: "external",
-        label: "Third-Party External HTTP Latency",
-        details: "Waiting 1,450ms (79% of request time) synchronously on Stripe PaymentIntent confirmation and PostNL shipping API.",
-        impact_pct: 79
-      },
-      spans: [
-        { id: "sp-c1", name: "Laravel Boot & Middleware", category: "boot", startMs: 0, durationMs: 18 },
-        { id: "sp-c2", name: "CheckoutController::process", category: "controller", startMs: 18, durationMs: 1820 },
-        { id: "sp-c3", name: "Validate Cart & Acquire DB Stock Lock", category: "query", startMs: 25, durationMs: 140, details: "SELECT ... FOR UPDATE on inventory" },
-        { id: "sp-c4", name: "HTTP Guzzle: Stripe API PaymentIntent::confirm", category: "http", startMs: 170, durationMs: 1120, details: "POST https://api.stripe.com/v1/payment_intents/pi_3914/confirm", status: 200 },
-        { id: "sp-c5", name: "HTTP Guzzle: PostNL Shipping Label Generation", category: "http", startMs: 1290, durationMs: 330, details: "POST https://api.postnl.nl/shipment/v2/label", status: 200 },
-        { id: "sp-c6", name: "DB Order Commit & Event Dispatch", category: "query", startMs: 1630, durationMs: 50, details: "INSERT INTO `orders`, UPDATE `inventory`" },
-        { id: "sp-c7", name: "Dispatch OrderConfirmationJob to Horizon Queue", category: "controller", startMs: 1680, durationMs: 140 }
-      ],
-      queries: [
-        { id: "qc-1", sql: "SELECT * FROM `carts` WHERE `id` = ? LIMIT 1", durationMs: 12, origin: "CheckoutController:28", is_duplicate: false },
-        { id: "qc-2", sql: "SELECT * FROM `inventories` WHERE `product_id` IN (102, 105) FOR UPDATE", durationMs: 128, origin: "StockService:54", is_duplicate: false },
-        { id: "qc-3", sql: "INSERT INTO `orders` (`user_id`, `amount`, `status`) VALUES (?, ?, ?)", durationMs: 34, origin: "CheckoutController:82", is_duplicate: false }
-      ],
-      cache_operations: [
-        { key: "lock:checkout:user:882", operation: "set", hit: true, durationMs: 1.4, store: "redis" }
-      ],
-      events_dispatched: [
-        { event: "App\\Events\\OrderPlaced", listeners_count: 3, durationMs: 8 }
-      ],
-      gates_evaluated: [
-        { ability: "checkout-cart", result: "allowed", user_id: 882 }
+        { id: "qr-1", sql: "SELECT `id`, `code`, `name` FROM `articles` WHERE `code` LIKE 'GAS%' LIMIT 48", durationMs: 24.2, origin: "ArticleSearchController:42" },
+        { id: "qr-2", sql: "SELECT `article_id`, `price_cents` FROM `article_prices` WHERE `article_id` IN (412, 413, 414) AND `debtor_id` = 1", durationMs: 18.4, origin: "ArticlePriceRepository:52" }
       ]
     }
   },
   {
-    id: "evt-req-03",
+    id: "evt-req-de-01",
     type: "request",
     timestamp: Date.now() - 1000 * 60 * 8,
-    level: "warning",
-    title: "GET /api/v1/dashboard/recent-orders",
-    durationMs: 1140,
-    metadata: {
-      project: "beekman",
-      domain: "partsnl.local",
-      status: 200,
-      memory_peak_mb: 48.1,
-      db_queries_count: 68,
-      db_time_ms: 940,
-      external_http_time_ms: 0,
-      php_execution_time_ms: 200,
-      controller: "App\\Http\\Controllers\\Api\\DashboardController@recentOrders",
-      middleware: ["web", "auth:sanctum"],
-      breakdown: {
-        database_pct: 82,
-        external_pct: 0,
-        php_pct: 18
-      },
-      primary_bottleneck: {
-        category: "n_plus_one",
-        label: "N+1 Eloquent Loop (68 Queries)",
-        details: "Executed 68 queries in loop when accessing `$order->items` and `$order->customer` inside collection map without eager loading.",
-        impact_pct: 82
-      },
-      spans: [
-        { id: "sp-d1", name: "Laravel Boot & Auth", category: "boot", startMs: 0, durationMs: 25 },
-        { id: "sp-d2", name: "DashboardController::recentOrders", category: "controller", startMs: 25, durationMs: 1115 },
-        { id: "sp-d3", name: "Fetch 50 Orders (Initial Query)", category: "query", startMs: 30, durationMs: 45, sql: "SELECT * FROM `orders` ORDER BY `created_at` DESC LIMIT 50" },
-        { id: "sp-d4", name: "N+1 Loop: 67 individual SELECTs for items & customer", category: "query", startMs: 80, durationMs: 895, details: "Executed inside ->map() callback" },
-        { id: "sp-d5", name: "JSON Resource Serialization", category: "view", startMs: 980, durationMs: 145 }
-      ],
-      queries: [
-        { id: "qd-1", sql: "SELECT * FROM `orders` ORDER BY `created_at` DESC LIMIT 50", durationMs: 45, origin: "DashboardController:46", is_duplicate: false },
-        { id: "qd-2", sql: "SELECT * FROM `order_items` WHERE `order_id` = ?", durationMs: 14, origin: "DashboardController:48", is_duplicate: true },
-        { id: "qd-3", sql: "SELECT * FROM `order_items` WHERE `order_id` = ?", durationMs: 12, origin: "DashboardController:48", is_duplicate: true },
-        { id: "qd-4", sql: "SELECT * FROM `users` WHERE `id` = ? LIMIT 1", durationMs: 11, origin: "DashboardController:49", is_duplicate: true }
-      ],
-      cache_operations: []
-    }
-  },
-  {
-    id: "evt-req-04",
-    type: "request",
-    timestamp: Date.now() - 1000 * 60 * 15,
-    level: "critical",
-    title: "GET /admin/users/export-csv",
-    durationMs: 3280,
-    metadata: {
-      project: "beekman",
-      domain: "beekman.local",
-      status: 200,
-      memory_peak_mb: 134.8,
-      db_queries_count: 5,
-      db_time_ms: 1120,
-      external_http_time_ms: 0,
-      php_execution_time_ms: 2160,
-      controller: "App\\Http\\Controllers\\Admin\\UserExportController@download",
-      middleware: ["web", "auth", "can:export-users"],
-      breakdown: {
-        database_pct: 34,
-        external_pct: 0,
-        php_pct: 66
-      },
-      primary_bottleneck: {
-        category: "memory",
-        label: "High Memory Consumption & Eloquent Hydration",
-        details: "134.8 MB peak memory usage (dangerously close to 256MB limit). User::all() hydrations 12,000 Eloquent model objects in memory.",
-        impact_pct: 66
-      },
-      spans: [
-        { id: "sp-e1", name: "Laravel Boot", category: "boot", startMs: 0, durationMs: 20 },
-        { id: "sp-e2", name: "DB Load 12,000 Users (PDO Fetch)", category: "query", startMs: 25, durationMs: 1120, sql: "SELECT * FROM `users`" },
-        { id: "sp-e3", name: "Eloquent Hydration of 12k Models", category: "controller", startMs: 1145, durationMs: 1420, details: "12,000 User instances created in memory (+105 MB RAM)" },
-        { id: "sp-e4", name: "CSV Formatting & Stream Response", category: "view", startMs: 2570, durationMs: 710, details: "fputcsv() file write to output buffer" }
-      ],
-      queries: [
-        { id: "qe-1", sql: "SELECT * FROM `users`", durationMs: 1120, origin: "UserExportController:22", is_duplicate: false }
-      ]
-    }
-  },
-  {
-    id: "evt-req-05",
-    type: "request",
-    timestamp: Date.now() - 1000 * 60 * 2,
     level: "info",
-    title: "GET /api/v1/products/catalog",
-    durationMs: 412,
+    title: "GET /kategorie/gas-zubehoer",
+    durationMs: 442.0,
     metadata: {
       project: "beekman",
       domain: "ersatzteileshop.local",
       status: 200,
-      memory_peak_mb: 24.1,
-      db_queries_count: 18,
-      db_time_ms: 280,
+      memory_peak_mb: 8.5,
+      db_queries_count: 68,
+      db_time_ms: 228.4,
       external_http_time_ms: 0,
-      php_execution_time_ms: 132,
-      controller: "App\\Http\\Controllers\\ProductController@catalog",
-      middleware: ["api"],
+      php_execution_time_ms: 213.6,
+      controller: "App\\Http\\Controllers\\Frontend\\CategoryController@getFallbackIndex",
+      models_count: 1180,
       breakdown: {
-        database_pct: 68,
+        database_pct: 52,
         external_pct: 0,
-        php_pct: 32
-      },
-      primary_bottleneck: {
-        category: "database",
-        label: "Redis Cache Miss on Product Catalog",
-        details: "Cache key `catalog:category:tech` was stale or evicted, falling back to 18 MySQL queries.",
-        impact_pct: 68
-      },
-      spans: [
-        { id: "sp-p1", name: "Laravel Boot", category: "boot", startMs: 0, durationMs: 16 },
-        { id: "sp-p2", name: "Cache::get('catalog:category:tech')", category: "cache", startMs: 18, durationMs: 3.2, details: "Redis cache miss" },
-        { id: "sp-p3", name: "Execute Catalog Filter Queries", category: "query", startMs: 22, durationMs: 280, sql: "SELECT * FROM `products` WHERE `category_id` = 4 AND `is_active` = 1" },
-        { id: "sp-p4", name: "Cache::put('catalog:category:tech', ..., 3600)", category: "cache", startMs: 310, durationMs: 4.1 },
-        { id: "sp-p5", name: "View / JSON Response", category: "view", startMs: 320, durationMs: 88 }
-      ],
-      queries: [
-        { id: "qp-1", sql: "SELECT * FROM `products` WHERE `category_id` = 4 AND `is_active` = 1 LIMIT 24", durationMs: 180, origin: "ProductController:42" }
-      ],
-      cache_operations: [
-        { key: "catalog:category:tech", operation: "get", hit: false, durationMs: 3.2, store: "redis" },
-        { key: "catalog:category:tech", operation: "set", hit: true, durationMs: 4.1, store: "redis" }
-      ]
+        php_pct: 48
+      }
     }
   },
   {
-    id: "evt-req-06",
+    id: "evt-req-b2b-01",
     type: "request",
-    timestamp: Date.now() - 1000 * 30,
+    timestamp: Date.now() - 1000 * 60 * 15,
     level: "info",
-    title: "POST /api/v1/auth/login",
-    durationMs: 135,
+    title: "GET /assortiment/aansluitmateriaal",
+    durationMs: 310.0,
     metadata: {
       project: "beekman",
-      domain: "onderdelen_nl.local",
+      domain: "beekman.local",
       status: 200,
-      memory_peak_mb: 18.2,
-      db_queries_count: 2,
-      db_time_ms: 12,
+      memory_peak_mb: 12.8,
+      db_queries_count: 38,
+      db_time_ms: 145.2,
       external_http_time_ms: 0,
-      php_execution_time_ms: 123,
-      controller: "App\\Http\\Controllers\\Auth\\LoginController@login",
-      middleware: ["api", "guest", "throttle:login"],
+      php_execution_time_ms: 164.8,
+      controller: "App\\Http\\Controllers\\B2B\\CatalogController@index",
+      models_count: 420,
       breakdown: {
-        database_pct: 9,
+        database_pct: 47,
         external_pct: 0,
-        php_pct: 91
-      },
-      primary_bottleneck: {
-        category: "php",
-        label: "Normal Bcrypt Password Hash Verification",
-        details: "Bcrypt work factor 12 CPU cost (healthy security posture).",
-        impact_pct: 91
-      },
-      spans: [
-        { id: "sp-l1", name: "Framework Boot", category: "boot", startMs: 0, durationMs: 12 },
-        { id: "sp-l2", name: "SELECT user by email", category: "query", startMs: 14, durationMs: 8, sql: "SELECT * FROM `users` WHERE `email` = ? LIMIT 1" },
-        { id: "sp-l3", name: "Hash::check (Bcrypt compute)", category: "controller", startMs: 24, durationMs: 95 },
-        { id: "sp-l4", name: "Sanctum createToken()", category: "query", startMs: 120, durationMs: 4, sql: "INSERT INTO `personal_access_tokens` ..." }
-      ],
-      queries: [
-        { id: "ql-1", sql: "SELECT * FROM `users` WHERE `email` = ? LIMIT 1", durationMs: 8, origin: "LoginController:31" }
-      ]
+        php_pct: 53
+      }
     }
   },
   {
-    id: "evt-job-01",
-    type: "job",
-    timestamp: Date.now() - 1000 * 60 * 12,
-    level: "error",
-    title: "App\\Jobs\\SyncShopifyCatalogJob - MaxAttemptsExceededException",
-    message: "Job failed after 3 attempts. GuzzleHttp\\Exception\\ConnectException: cURL error 28: Operation timed out after 30001 milliseconds with 0 bytes received",
-    durationMs: 30120,
+    id: "evt-err-01",
+    type: "exception",
+    timestamp: Date.now() - 1000 * 60 * 1,
+    level: "critical",
+    title: "QueryException: SQLSTATE[HY000] [2002] Connection timed out (130.0.1.42:3306 beekman_live)",
+    message: "SQLSTATE[HY000] [2002] Connection timed out on mysql remote connection to 130.0.1.42:3306 (database: beekman_live)",
+    durationMs: 3004.2,
     metadata: {
       project: "beekman",
-      domain: "rest.beekman.local",
-      job_class: "App\\Jobs\\SyncShopifyCatalogJob",
-      queue: "integrations",
-      attempts: 3,
-      max_tries: 3,
-      backoff: [30, 120, 300],
-      payload: { store_id: "store_nl_ams_991", sync_type: "full_inventory", items_count: 4500 },
-      exception_file: "app/Jobs/SyncShopifyCatalogJob.php:88"
+      domain: "partsnl.local",
+      exception_class: "Illuminate\\Database\\QueryException",
+      file: "app/Repositories/ArticlePriceRepository.php",
+      line: 84,
+      code_snippet: [
+        { line: 81, code: "        $connection = DB::connection('mysql_remote');" },
+        { line: 82, code: "        return $connection->table('article_prices')" },
+        { line: 83, code: "            ->whereIn('article_id', $articleIds)" },
+        { line: 84, code: "            ->where('debtor_id', $debtorId)->get();", highlight: true },
+        { line: 85, code: "    }" }
+      ],
+      breadcrumbs: [
+        { type: "request", message: "GET /aansluitmateriaal/gas", offset_ms: 0 },
+        { type: "route", message: "GET {fallbackPlaceholder} (safesefparts)", offset_ms: 62 },
+        { type: "cache", message: "Redis GET price_cache:partsnl:gas [MISS, 1.2ms]", offset_ms: 88 },
+        { type: "query", message: "SELECT FROM `article_prices` on 130.0.1.42:3306 [TIMEOUT, 3000ms]", offset_ms: 3088 },
+        { type: "exception", message: "QueryException: Connection timed out to 130.0.1.42:3306", offset_ms: 3090 }
+      ],
+      request: {
+        method: "GET",
+        url: "/aansluitmateriaal/gas",
+        status: 500,
+        user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        ip: "82.161.44.19"
+      },
+      db_queries_count: 73,
+      db_time_ms: 3249.0,
+      occurrences_last_24h: 3,
+      affected_users: 2,
+      status: "unresolved",
+      tags: { env: "local", connection: "mysql_remote", host: "130.0.1.42" }
     }
   },
   {
@@ -929,60 +426,177 @@ let telemetryEvents: TelemetryEvent[] = [
     type: "exception",
     timestamp: Date.now() - 1000 * 60 * 18,
     level: "error",
-    title: "Illuminate\\Database\\Eloquent\\ModelNotFoundException: No query results for model [App\\Models\\User] 99182",
-    message: "ModelNotFoundException in /vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:612",
+    title: "Illuminate\\Database\\Eloquent\\ModelNotFoundException: No query results for model [App\\Models\\Category] onbekend-onderdeel",
+    message: "No query results for model [App\\Models\\Category] with slug: 'onbekend-onderdeel' in CategoryController.php:112",
     metadata: {
-      project: "beekman",
-      domain: "beekman.local",
+      project: "partsnl",
+      domain: "partsnl.local",
       exception_class: "Illuminate\\Database\\Eloquent\\ModelNotFoundException",
-      file: "app/Http/Controllers/UserProfileController.php",
-      line: 28,
+      file: "app/Http/Controllers/Frontend/CategoryController.php",
+      line: 112,
       code_snippet: [
-        { line: 26, code: "    public function show(string $uuid) {" },
-        { line: 27, code: "        // Direct findOrFail without graceful 404 or cache" },
-        { line: 28, code: "        $user = User::where('uuid', $uuid)->firstOrFail();", highlight: true },
-        { line: 29, code: "        return view('user.profile', compact('user'));" }
-      ],
-      breadcrumbs: [
-        { category: "request", message: "GET /users/00000000-0000-0000-0000-000000000000", time: "-40ms" },
-        { category: "query", message: "SELECT * FROM `users` WHERE `uuid` = '00000000-...' LIMIT 1 [2.1ms]", time: "-12ms" }
+        { line: 110, code: "    public function show(string $slug) {" },
+        { line: 111, code: "        $category = Category::where('slug', $slug)" },
+        { line: 112, code: "            ->where('is_active', 1)->firstOrFail();", highlight: true },
+        { line: 113, code: "        return view('theme::shop.category', compact('category'));" }
       ],
       request: {
         method: "GET",
-        url: "/users/00000000-0000-0000-0000-000000000000",
+        url: "/onbekend-onderdeel",
         status: 404,
         ip: "84.241.19.12"
       },
-      occurrences_last_24h: 142,
-      affected_users: 110,
-      tags: { env: "production", spider: "bingbot/2.0" }
+      occurrences_last_24h: 8,
+      affected_users: 6,
+      status: "unresolved",
+      tags: { env: "local", subsystem: "SEF Fallback Resolver" }
+    }
+  },
+  {
+    id: "evt-err-03",
+    type: "exception",
+    timestamp: Date.now() - 1000 * 60 * 22,
+    level: "critical",
+    title: "GuzzleHttp\\Exception\\ConnectException: Failed to connect to rest.beekman.local port 443: Connection refused",
+    message: "cURL error 7: Failed to connect to rest.beekman.local port 443: Connection refused (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://rest.beekman.local/v1/stock/bulk-check",
+    metadata: {
+      project: "beekman",
+      domain: "partsnl.local",
+      exception_class: "GuzzleHttp\\Exception\\ConnectException",
+      file: "app/Services/BeekmanRestApiClient.php",
+      line: 42,
+      code_snippet: [
+        { line: 39, code: "        $client = new Client(['base_uri' => config('services.beekman.rest_url')]);" },
+        { line: 40, code: "        $response = $client->post('/v1/stock/bulk-check', [" },
+        { line: 41, code: "            'json' => ['article_numbers' => $articleNumbers]," },
+        { line: 42, code: "            'timeout' => 2.0", highlight: true },
+        { line: 43, code: "        ]);" }
+      ],
+      breadcrumbs: [
+        { category: "request", message: "GET /aansluitmateriaal/gas (partsnl.local)", time: "-240ms" },
+        { category: "db", message: "SELECT * FROM `article_prices` WHERE `article_id` = 412 [1.8ms]", time: "-190ms" },
+        { category: "http", message: "POST https://rest.beekman.local/v1/stock/bulk-check", time: "-100ms" },
+        { category: "exception", message: "ConnectException: Connection refused [Errno 111]", time: "0ms" }
+      ],
+      request: {
+        method: "GET",
+        url: "/aansluitmateriaal/gas",
+        status: 500,
+        ip: "82.161.44.19"
+      },
+      occurrences_last_24h: 14,
+      affected_users: 11,
+      status: "unresolved",
+      tags: { env: "local", subsystem: "Stock Bulk-Check Gateway" }
+    }
+  },
+  {
+    id: "evt-qry-01",
+    type: "query",
+    timestamp: Date.now() - 1000 * 60 * 6,
+    level: "warning",
+    title: "N+1 Query Bottleneck: Beekman\\Shops\\Models\\Articles\\ArticlePrices",
+    message: "Executed 108 individual queries in loop: `SELECT * FROM article_prices WHERE article_id = ? AND debtor_id = ?`",
+    durationMs: 840,
+    metadata: {
+      project: "partsnl",
+      domain: "partsnl.local",
+      sql: "SELECT * FROM `article_prices` WHERE `article_prices`.`article_id` = ? AND `article_prices`.`debtor_id` = 2 AND `valid_until` >= NOW() LIMIT 1",
+      execution_count: 108,
+      total_time_ms: 840,
+      origin: "App\\Http\\Controllers\\Frontend\\CategoryController::getFallbackIndex (line 148)",
+      code_snippet: [
+        { line: 146, code: "    foreach ($articles as $article) {" },
+        { line: 147, code: "        // N+1 query loop: missing with(['articlePrices']) eager loading" },
+        { line: 148, code: "        $price = $article->articlePrices()->where('debtor_id', $debtorId)->first();", highlight: true },
+        { line: 149, code: "        $article->resolved_price = $price?->price_cents;" },
+        { line: 150, code: "    }" }
+      ],
+      explain_plan: {
+        select_type: "SIMPLE",
+        table: "article_prices",
+        type: "ref",
+        possible_keys: "idx_article_debtor",
+        key: "idx_article_debtor",
+        rows_examined: 108,
+        cost: "42.0"
+      },
+      tags: { route: "GET /aansluitmateriaal/gas", framework: "Laravel 11.20" }
+    }
+  },
+  {
+    id: "evt-qry-02",
+    type: "query",
+    timestamp: Date.now() - 1000 * 60 * 14,
+    level: "warning",
+    title: "Slow Remote Query: 130.0.1.42 (beekman_live) -> category_images",
+    message: "Query to remote MySQL (130.0.1.42) took 148ms due to network round-trip overhead.",
+    durationMs: 148,
+    metadata: {
+      project: "beekman",
+      domain: "beekman.local",
+      sql: "SELECT `ci`.* FROM `category_images` AS `ci` INNER JOIN `categories` AS `c` ON `ci`.`category_id` = `c`.`id` WHERE `c`.`code` = 'aansluitmateriaal-gas' AND `ci`.`is_active` = 1",
+      execution_count: 1,
+      total_time_ms: 148,
+      origin: "Beekman\\Shops\\Models\\Category::images (line 52)",
+      tags: { host: "130.0.1.42", database: "beekman_live" }
     }
   },
   {
     id: "evt-qry-03",
     type: "query",
-    timestamp: Date.now() - 1000 * 60 * 25,
+    timestamp: Date.now() - 1000 * 60 * 20,
     level: "warning",
-    title: "Slow Query Missing Index: Full Table Scan on `audit_logs`",
-    message: "Query took 1,420ms scanning 480,200 rows without indexed `created_at` and `action` columns.",
-    durationMs: 1420,
+    title: "N+1 Overrides Memory Bottleneck: Beekman\\Shops\\Models\\Configurations\\Overrides",
+    message: "Hydrated 710 Overrides model instances into PHP memory for route GET /aansluitmateriaal/gas (14.2 MB memory).",
+    durationMs: 384,
+    metadata: {
+      project: "partsnl",
+      domain: "partsnl.local",
+      sql: "SELECT * FROM `overrides` WHERE `configuration_id` = ? LIMIT 1",
+      execution_count: 230,
+      total_time_ms: 384,
+      origin: "Beekman\\Shops\\Services\\ConfigurationResolver::resolveOverrides (line 78)",
+      tags: { models_hydrated: 710, memory_impact: "14.2MB" }
+    }
+  },
+  {
+    id: "evt-job-01",
+    type: "job",
+    timestamp: Date.now() - 1000 * 60 * 12,
+    level: "error",
+    title: "App\\Jobs\\SyncArticlePricesJob - MaxAttemptsExceededException",
+    message: "Job failed after 3 attempts. QueryException: Lock wait timeout exceeded on table article_prices during ERP delta sync from 130.0.1.42",
+    durationMs: 18400,
     metadata: {
       project: "beekman",
-      domain: "beekman.local",
-      sql: "SELECT `id`, `user_id`, `action`, `payload`, `created_at` FROM `audit_logs` WHERE `action` = 'auth.failed' AND `created_at` >= '2026-09-01 00:00:00' ORDER BY `created_at` DESC LIMIT 50",
-      execution_count: 12,
-      total_time_ms: 17040,
-      origin: "App\\Http\\Controllers\\SecurityController::recentFailedLogins (line 34)",
-      explain_plan: {
-        select_type: "SIMPLE",
-        table: "audit_logs",
-        type: "ALL",
-        possible_keys: null,
-        key: null,
-        rows_examined: 480200,
-        cost: "49280.0"
-      },
-      tags: { route: "GET /admin/security/failed-logins", table: "audit_logs" }
+      domain: "rest.beekman.local",
+      job_class: "App\\Jobs\\SyncArticlePricesJob",
+      queue: "pricing-sync",
+      attempts: 3,
+      max_tries: 3,
+      backoff: [30, 60, 180],
+      payload: { source: "mysql_remote 130.0.1.42", articles_count: 2450, delta_type: "b2b_prices" },
+      exception_file: "app/Jobs/SyncArticlePricesJob.php:64"
+    }
+  },
+  {
+    id: "evt-job-02",
+    type: "job",
+    timestamp: Date.now() - 1000 * 60 * 5,
+    level: "info",
+    title: "App\\Jobs\\WarmCategoryCacheJob - Voltooid",
+    message: "Category tree and fallback index warmed in Redis for partsnl.local and ersatzteileshop.local.",
+    durationMs: 840,
+    metadata: {
+      project: "partsnl",
+      domain: "partsnl.local",
+      job_class: "App\\Jobs\\WarmCategoryCacheJob",
+      queue: "catalogue-cache",
+      attempts: 1,
+      max_tries: 1,
+      payload: { categories_warmed: 1255, redis_keys_stored: 48 },
+      exception_file: ""
     }
   }
 ];

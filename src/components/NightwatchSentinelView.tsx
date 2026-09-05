@@ -83,7 +83,7 @@ export const NightwatchSentinelView: React.FC = () => {
       value: "P95 latency 840ms",
       latency_ms: 840,
       last_checked: "Zojuist",
-      details: "Enkele uitschieter geregistreerd op https://inventory.example.test/products/{value}."
+      details: "Enkele uitschieter geregistreerd op https://rest.beekman.local/v1/stock/bulk-check."
     },
     {
       id: "check-artisan",

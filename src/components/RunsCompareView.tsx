@@ -24,7 +24,17 @@ export const RunsCompareView: React.FC<RunsCompareViewProps> = ({
   const availableRuns = runs;
   const currentRun = availableRuns.find((r) => r.id === currentRunId) || availableRuns[0];
 
-  const otherRuns = currentRun ? availableRuns.filter((r) => r.id !== currentRun.id) : [];
+  // Fixation: filter runs to matching endpoints to prevent comparing apples to oranges
+  const [fixedToSameEndpoint, setFixedToSameEndpoint] = useState<boolean>(true);
+
+  const endpointRuns = currentRun
+    ? availableRuns.filter(
+        (r) => r.id !== currentRun.id && (!fixedToSameEndpoint || r.label === currentRun.label)
+      )
+    : [];
+
+  const otherRuns = endpointRuns.length > 0 ? endpointRuns : availableRuns.filter((r) => r.id !== currentRun?.id);
+
   const [selectedCompareRunId, setSelectedCompareRunId] = useState<string>(
     otherRuns[0]?.id || ""
   );
@@ -37,9 +47,9 @@ export const RunsCompareView: React.FC<RunsCompareViewProps> = ({
         <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center mx-auto">
           <GitCompare className="w-4 h-4" />
         </div>
-        <div className="font-bold text-slate-200">Onvoldoende runs om te vergelijken</div>
+        <div className="font-bold text-slate-200">Onvoldoende vergelijkbare runs gevonden</div>
         <p className="max-w-md mx-auto text-slate-400">
-          Er zijn minimaal twee geregistreerde runs nodig om regressieverschillen en SQL-mutaties te kunnen analyseren.
+          Er is geen eerdere run geregistreerd met hetzelfde endpoint ({currentRun?.label || "deze route"}) om een zuivere A/B regressie te kunnen berekenen.
         </p>
       </div>
     );
@@ -55,8 +65,43 @@ export const RunsCompareView: React.FC<RunsCompareViewProps> = ({
   const memoryDiff = currentRun.memory_peak_mb - baselineRun.memory_peak_mb;
   const memoryPct = Math.round((memoryDiff / (baselineRun.memory_peak_mb || 1)) * 100);
 
+  const isSameRoute = currentRun.label === baselineRun.label;
+
   return (
     <div className="space-y-6">
+      {/* Fixed Endpoint Banner */}
+      <div className="p-3.5 rounded-xl bg-slate-900 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-bold text-amber-300">
+                Gefixeerd op identiek request: {currentRun.label}
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                1-op-1 A/B Regressie
+              </span>
+            </div>
+            <p className="text-[11px] font-mono text-slate-400">
+              Vergelijking is strikt gefixeerd op hetzelfde endpoint ({currentRun.label}) zodat je geen verschillende pagina's met elkaar vergelijkt.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setFixedToSameEndpoint(!fixedToSameEndpoint)}
+          className={`px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold transition cursor-pointer border shrink-0 ${
+            fixedToSameEndpoint
+              ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30"
+              : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+          }`}
+        >
+          {fixedToSameEndpoint ? "✓ Alleen zelfde endpoint" : "Alle runs toestaan"}
+        </button>
+      </div>
+
       {/* Top Header & Selector */}
       <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -64,18 +109,19 @@ export const RunsCompareView: React.FC<RunsCompareViewProps> = ({
             <div className="flex items-center gap-2 mb-1">
               <GitCompare className="w-4 h-4 text-amber-400" />
               <h3 className="text-sm font-bold font-mono text-white">
-                Runs vergelijken
+                Runs vergelijken ({currentRun.label})
               </h3>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-bold">
-                {currentRun.label} · run {currentRun.run_number}
+                Huidig: run {currentRun.run_number}
               </span>
             </div>
             <p className="text-xs font-mono text-slate-400">
-              Meet het verschil tussen deze run en een eerdere uitvoering; runs met hetzelfde label staan herkenbaar bij elkaar.
+              Vergelijk run #{currentRun.run_number} rechtstreeks tegen baseline run #{baselineRun.run_number} voor dit verzoek.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-slate-400">Vergelijk tegen:</span>
             <select
               value={selectedCompareRunId}
               onChange={(e) => setSelectedCompareRunId(e.target.value)}
@@ -83,7 +129,7 @@ export const RunsCompareView: React.FC<RunsCompareViewProps> = ({
             >
               {otherRuns.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.label} · run {r.run_number} ({r.flow_duration_ms} ms, {r.queries_count} queries)
+                  Run #{r.run_number} ({r.label}) · {r.flow_duration_ms} ms · {r.queries_count} Q
                 </option>
               ))}
             </select>

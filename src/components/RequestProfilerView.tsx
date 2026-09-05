@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { TelemetryEvent, TraceSpan, ProfilerQuery, GroupedQuery, ProfilerRunSummary } from "../types";
 import { LARAVEL_RECIPES, LaravelFixRecipe } from "../data/laravelRecipes";
+import { DEVSTACK_RUN_160, RUN_160_WARNING_LOGS, ProfilerLogEntry } from "../data/devstackRun160";
 import { LifecycleTimeline } from "./LifecycleTimeline";
 import { EloquentModelsStrip } from "./EloquentModelsStrip";
 import { HotspotsTable } from "./HotspotsTable";
@@ -120,24 +121,29 @@ export const RequestProfilerView: React.FC<RequestProfilerViewProps> = ({
       .catch(() => {});
   }, []);
 
+  const currentRun = runs.find((r) => r.id === selectedRunId) || runs[0];
+
   const [selectedReqId, setSelectedReqId] = useState<string>(
-    initialRequestId || requestEvents[0]?.id || ""
+    initialRequestId || (currentRun?.request_ids?.[0]) || "evt-req-parts-01"
   );
 
   useEffect(() => {
     if (initialRequestId) {
       setSelectedReqId(initialRequestId);
+    } else if (currentRun?.request_ids && currentRun.request_ids.length > 0) {
+      if (!currentRun.request_ids.includes(selectedReqId)) {
+        setSelectedReqId(currentRun.request_ids[0]);
+      }
     }
-  }, [initialRequestId]);
+  }, [initialRequestId, selectedRunId, currentRun]);
 
   const [activeSubtab, setActiveSubtab] = useState<
-    "overzicht" | "requests" | "application_path" | "queries" | "cache" | "http" | "exceptions" | "compare" | "waterfall"
-  >("overzicht");
+    "overzicht" | "application_path" | "hotspots" | "logs" | "queries" | "requests" | "cache" | "http" | "exceptions" | "compare" | "waterfall"
+  >("application_path");
+  const [logLevelFilter, setLogLevelFilter] = useState<string>("all");
   const [copiedQueryId, setCopiedQueryId] = useState<string | null>(null);
   const [activeExplainId, setActiveExplainId] = useState<string | null>(null);
   const [selectedSpan, setSelectedSpan] = useState<TraceSpan | null>(null);
-
-  const currentRun = runs.find((r) => r.id === selectedRunId) || runs[0];
 
   const currentRunRequests = requestEvents.filter(
     (e) => (currentRun?.request_ids || []).includes(e.id) || e.metadata?.run_id === selectedRunId
@@ -283,27 +289,48 @@ export const RequestProfilerView: React.FC<RequestProfilerViewProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Top Banner */}
-      <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
+      {/* DevStack Project Header Ribbon (Exact match with target DevStack screenshot 1 & 4) */}
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
             <BarChart2 className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white tracking-tight">
-              Laravel Request Profiler &amp; Waterval
-            </h2>
-            <p className="text-xs text-slate-400">
-              Gedetailleerde inspectie van execution spans, database queries, Redis cache hits, gates en middleware.
-            </p>
+            <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400 mb-0.5">
+              <span>DevStack</span>
+              <span>/</span>
+              <span>Projecten</span>
+              <span>/</span>
+              <span className="text-cyan-400 font-semibold">{currentRequest?.metadata?.domain || currentRun.domain || "partsnl.local"}</span>
+              <span>/</span>
+              <span className="text-amber-400 font-bold">Request Profiler</span>
+            </div>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-base font-bold text-white tracking-tight">
+                Laravel Request Profiler &amp; Waterval
+              </h2>
+              <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live Tracing Actief
+              </span>
+              <span className="text-xs font-mono text-slate-400 hidden lg:inline">
+                PHP 8.3.10 · Laravel 11.20 · Inertia / Vue 3
+              </span>
+            </div>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-end md:self-center">
+          <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-300">
+            Geselecteerd: <strong className="text-amber-400">{currentRun.label}</strong> ({currentRunRequests.length} requests)
+          </span>
         </div>
       </div>
 
       {/* Main Grid: Run/Request Selector (Left) + Profiler Workbench (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Column: Runs & Request List */}
-        <div className="lg:col-span-4 space-y-3">
+        {/* Left Column: Runs & Request List (Compact & DevStack-aligned) */}
+        <div className="lg:col-span-3 xl:col-span-3 space-y-3">
           {/* View Mode Toggle: Runs vs Alle Requests */}
           <div className="flex items-center rounded-xl bg-slate-900 border border-slate-800 p-1">
             <button
@@ -402,30 +429,51 @@ export const RequestProfilerView: React.FC<RequestProfilerViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Requests preview in this run */}
+                    {/* Requests preview in this run (DevStack style request picker) */}
                     {isSelected && (
-                      <div className="pt-2 border-t border-slate-800/80 space-y-1">
-                        <div className="text-[10px] font-mono text-slate-400 font-semibold uppercase">
-                          Requests in deze flow:
+                      <div className="pt-2.5 border-t border-slate-800/80 space-y-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 font-semibold uppercase tracking-wider">
+                          <span>Flow requests ({currentRunRequests.length}):</span>
+                          <span className="text-amber-400 font-bold">{currentRun.flow_duration_ms} ms</span>
                         </div>
-                        {currentRunRequests.map((r) => (
-                          <div
-                            key={r.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedReqId(r.id);
-                              setActiveSubtab("application_path");
-                            }}
-                            className={`p-1.5 rounded-lg flex items-center justify-between text-xs font-mono transition cursor-pointer ${
-                              currentRequest?.id === r.id
-                                ? "bg-amber-500/20 text-amber-200 border border-amber-500/40"
-                                : "bg-slate-950 text-slate-300 hover:bg-slate-800"
-                            }`}
-                          >
-                            <span className="truncate max-w-[180px] font-medium">{r.title}</span>
-                            <span className="text-amber-400 font-bold">{r.durationMs}ms</span>
-                          </div>
-                        ))}
+                        {currentRunRequests.map((r, idx) => {
+                          const isReqActive = currentRequest?.id === r.id;
+                          const qCount = r.metadata?.queries?.length || r.metadata?.db_queries_count || 0;
+                          return (
+                            <div
+                              key={r.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedReqId(r.id);
+                              }}
+                              className={`p-2 rounded-xl border flex flex-col gap-1 text-xs font-mono transition-all cursor-pointer ${
+                                isReqActive
+                                  ? "bg-amber-500/15 text-amber-200 border-amber-500/50 shadow-sm"
+                                  : "bg-slate-950/80 text-slate-300 border-slate-800/80 hover:border-slate-700 hover:bg-slate-900"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-1.5">
+                                <div className="flex items-center gap-1.5 truncate">
+                                  <span className={`text-[10px] px-1 py-0.2 rounded font-bold ${isReqActive ? "bg-amber-500 text-slate-950" : "bg-slate-800 text-slate-300"}`}>
+                                    #{idx === 0 ? "216" : "217"}
+                                  </span>
+                                  <span className="truncate font-medium text-slate-200">{r.title}</span>
+                                </div>
+                                <span className={`font-bold ${isReqActive ? "text-amber-300" : "text-amber-400"}`}>
+                                  {r.durationMs}ms
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                                <span className="text-blue-400 font-medium">{qCount} queries</span>
+                                {r.metadata?.flow_offset_ms ? (
+                                  <span className="text-cyan-400 font-medium">+{r.metadata.flow_offset_ms}ms AJAX</span>
+                                ) : (
+                                  <span className="text-emerald-400 font-medium">Initiële request</span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -530,8 +578,8 @@ export const RequestProfilerView: React.FC<RequestProfilerViewProps> = ({
           )}
         </div>
 
-        {/* Right Column: Profiler Workbench */}
-        <div className="lg:col-span-8 space-y-4">
+        {/* Right Column: Profiler Workbench (Wide & Readable) */}
+        <div className="lg:col-span-9 xl:col-span-9 space-y-4">
           {currentRequest ? (
             <>
               {/* Header Box: Current Run & Request Vital Info (Screenshot 4) */}
@@ -604,45 +652,76 @@ export const RequestProfilerView: React.FC<RequestProfilerViewProps> = ({
                 </div>
               </div>
 
-              {/* Profiler Sub-Navigation Tabs (Screenshot 4) */}
+              {/* Profiler Sub-Navigation Tabs: DevStack-style Cyan Highlight, Clean & Uncluttered */}
               <div className="flex items-center gap-1 border-b border-slate-800/80 overflow-x-auto pb-px">
                 {[
-                  { id: "overzicht", label: "Overzicht" },
-                  { id: "requests", label: "Requests", count: currentRunRequests.length || 2 },
                   { 
                     id: "application_path", 
-                    label: "Applicatiepad", 
-                    count: currentRequest?.metadata?.hotspots?.length ? `${currentRequest.metadata.hotspots.length}` : "67"
+                    label: "Lifecycle & Modellen", 
+                    badge: "8 fasen · 1.255 models",
+                    isHighlight: true
+                  },
+                  { 
+                    id: "waterfall", 
+                    label: "Waterval", 
+                    count: spans.length 
                   },
                   { 
                     id: "queries", 
                     label: "Queries", 
-                    count: currentRun.queries_count || queries.length,
+                    count: queries.length || currentRequest.metadata?.db_queries_count || 0,
                     hasDuplicates: duplicateGroups.length > 0,
                     duplicateCount: totalDuplicateExecutions
                   },
-                  { id: "cache", label: "Cache", count: cacheOps.length || 0 },
-                  { id: "http", label: "HTTP", count: currentRequest?.metadata?.http_calls?.length || 0 },
-                  { id: "exceptions", label: "Exceptions", count: 0 },
-                  { id: "compare", label: "Vergelijken" },
-                  { id: "waterfall", label: "Waterval", count: spans.length }
+                  { 
+                    id: "hotspots", 
+                    label: "Code Hotspots", 
+                    count: DEVSTACK_RUN_160.report.hotspots.length 
+                  },
+                  { 
+                    id: "logs", 
+                    label: "Logs & Warnings", 
+                    count: RUN_160_WARNING_LOGS.length,
+                    isWarning: true
+                  },
+                  { 
+                    id: "http", 
+                    label: "Cache & HTTP", 
+                    count: cacheOps.length + (currentRequest?.metadata?.http_calls?.length || 0) 
+                  },
+                  { 
+                    id: "compare", 
+                    label: "Vergelijken",
+                    badge: "Gefixeerd op /gas"
+                  }
                 ].map((tab) => {
                   const isActive = activeSubtab === tab.id;
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveSubtab(tab.id as any)}
-                      className={`px-3.5 py-2 rounded-t-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 border-t-2 ${
+                      className={`px-4 py-2.5 rounded-t-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-2 border-t-2 ${
                         isActive
                           ? "bg-slate-900 border-amber-500 text-white shadow-sm"
                           : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
                       }`}
                     >
                       <span>{tab.label}</span>
-                      {tab.count !== undefined && (
+                      {tab.badge && (
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                            isActive ? "bg-amber-500 text-slate-950" : "bg-amber-500/10 text-amber-300 border border-amber-500/20"
+                          }`}
+                        >
+                          {tab.badge}
+                        </span>
+                      )}
+                      {tab.count !== undefined && !tab.badge && (
                         <span
                           className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                            isActive ? "bg-amber-500 text-slate-950" : "bg-slate-800 text-slate-400"
+                            isActive 
+                              ? "bg-amber-500 text-slate-950" 
+                              : (tab.isWarning ? "bg-amber-500/15 text-amber-400 border border-amber-500/30" : "bg-slate-800 text-slate-400")
                           }`}
                         >
                           {tab.count}
@@ -903,6 +982,46 @@ export const RequestProfilerView: React.FC<RequestProfilerViewProps> = ({
                       </div>
                     </div>
                   </div>
+
+                  {/* Direct Lifecycle & Models Showcase in Overzicht */}
+                  <div className="pt-4 border-t border-slate-800/80 space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                        <h4 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                          <span>Laravel Request Lifecycle &amp; Modellen</span>
+                          <span className="text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-normal">
+                            13 nanoseconde markers · 1.255 Eloquent models
+                          </span>
+                        </h4>
+                      </div>
+                      <button
+                        onClick={() => setActiveSubtab("application_path")}
+                        className="text-xs font-mono text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition cursor-pointer font-bold"
+                      >
+                        <span>Bekijk uitgebreid applicatiepad</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <LifecycleTimeline
+                      phases={currentRequest.metadata.lifecycle_phases}
+                      markers={currentRequest.metadata.laravel_context?.markers || (currentRequest.metadata as any).markers}
+                      middlewareChain={currentRequest.metadata.middleware_chain}
+                      controllerName={currentRequest.metadata.controller}
+                      routePattern={currentRequest.metadata.route_name || "GET {fallbackPlaceholder}"}
+                      viewName={currentRequest.metadata.view_name}
+                      totalDurationMs={totalDuration}
+                      queries={queries}
+                      cacheOpsCount={cacheOps.length}
+                      httpCallsCount={currentRequest.metadata.http_calls?.length || 0}
+                    />
+
+                    <EloquentModelsStrip
+                      models={currentRequest.metadata.loaded_models}
+                      totalInstancesCount={currentRequest.metadata.loaded_models_count}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -959,35 +1078,13 @@ export const RequestProfilerView: React.FC<RequestProfilerViewProps> = ({
                 </div>
               )}
 
-              {/* SUBTAB: APPLICATIEPAD (LifecycleTimeline + EloquentModelsStrip + HotspotsTable) */}
+              {/* SUBTAB: LIFECYCLE & MODELLEN (LifecycleTimeline + EloquentModelsStrip) */}
               {activeSubtab === "application_path" && (
                 <div className="space-y-6">
-                  {/* Request Selector Pills if multiple requests in run */}
-                  {currentRunRequests.length > 1 && (
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                      <span className="text-xs font-mono text-slate-400 whitespace-nowrap">
-                        Geselecteerd verzoek:
-                      </span>
-                      {currentRunRequests.map((r) => (
-                        <button
-                          key={r.id}
-                          onClick={() => setSelectedReqId(r.id)}
-                          className={`px-3 py-1 rounded-xl text-xs font-mono font-semibold transition cursor-pointer flex items-center gap-1.5 ${
-                            currentRequest.id === r.id
-                              ? "bg-amber-500 text-slate-950 shadow"
-                              : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200"
-                          }`}
-                        >
-                          <span>{r.title}</span>
-                          <span className="text-[10px]">({r.durationMs}ms)</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* 1. Lifecycle Timeline Stages */}
+                  {/* 1. Lifecycle Timeline Stages (8 Laravel Phases) */}
                   <LifecycleTimeline
                     phases={currentRequest.metadata.lifecycle_phases}
+                    markers={currentRequest.metadata.laravel_context?.markers || (currentRequest.metadata as any).markers}
                     middlewareChain={currentRequest.metadata.middleware_chain}
                     controllerName={currentRequest.metadata.controller}
                     routePattern={currentRequest.metadata.route_name || "GET {fallbackPlaceholder}"}
@@ -1002,13 +1099,6 @@ export const RequestProfilerView: React.FC<RequestProfilerViewProps> = ({
                   <EloquentModelsStrip
                     models={currentRequest.metadata.loaded_models}
                     totalInstancesCount={currentRequest.metadata.loaded_models_count}
-                  />
-
-                  {/* 3. Hotspots in dit request Table */}
-                  <HotspotsTable
-                    hotspots={currentRequest.metadata.hotspots}
-                    queries={queries}
-                    onSendQueryToTinker={onSendQueryToTinker}
                   />
                 </div>
               )}
@@ -1028,6 +1118,185 @@ export const RequestProfilerView: React.FC<RequestProfilerViewProps> = ({
                   <p className="text-xs font-mono text-slate-400 max-w-md mx-auto">
                     Er zijn geen ongehandelde excepties of fatal errors opgetreden tijdens de uitvoering van dit verzoek (HTTP 200 OK).
                   </p>
+                </div>
+              )}
+
+              {/* SUBTAB: HOTSPOTS */}
+              {activeSubtab === "hotspots" && (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="p-1.5 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                          <Zap className="w-4 h-4" />
+                        </span>
+                        <h3 className="text-sm font-bold font-mono text-white">
+                          PHP Code Hotspots &amp; Bottlenecks ({DEVSTACK_RUN_160.report.hotspots.length})
+                        </h3>
+                      </div>
+                      <p className="text-xs font-mono text-slate-400">
+                        Exacte broncode locaties en method calls die de meeste uitvoertijd consumeren in Run #160.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-300 border border-amber-500/30 text-xs font-mono font-bold">
+                        Totale hotspot tijd: 168.76 ms
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {DEVSTACK_RUN_160.report.hotspots.map((hs, idx) => (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition space-y-3"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-slate-800 text-slate-300 text-xs font-mono font-bold flex items-center justify-center border border-slate-700">
+                              #{idx + 1}
+                            </span>
+                            <span className="font-mono font-bold text-slate-200 text-sm">
+                              {hs.location}
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                              {hs.signal}
+                            </span>
+                            {hs.occurrences > 1 && (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                ×{hs.occurrences} aangeroepen
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="text-base font-bold font-mono text-amber-400">
+                              {hs.duration_ms} ms
+                            </span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(hs.location);
+                              }}
+                              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition cursor-pointer"
+                              title="Kopieer bestandspad"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-mono">
+                          <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80">
+                            <span className="text-slate-500 text-[10px] block uppercase">Method Call</span>
+                            <span className="text-amber-300 font-bold">{hs.call}</span>
+                          </div>
+                          <div className="p-2.5 rounded-lg bg-slate-950/70 border border-slate-800/80">
+                            <span className="text-slate-500 text-[10px] block uppercase">Functie / Context</span>
+                            <span className="text-slate-300">{hs.details}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* SUBTAB: LOGS & WARNINGS */}
+              {activeSubtab === "logs" && (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          <AlertTriangle className="w-4 h-4" />
+                        </span>
+                        <h3 className="text-sm font-bold font-mono text-white">
+                          Waarschuwingslogs &amp; Deprecations (44 waarschuwingen)
+                        </h3>
+                      </div>
+                      <p className="text-xs font-mono text-slate-400">
+                        Volledige logtrace van PHP notices, deprecations en telemetry waarschuwingen uit Run #160.
+                      </p>
+                    </div>
+
+                    {/* Filter Pills */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => setLogLevelFilter("all")}
+                        className={`px-3 py-1 rounded-xl text-xs font-mono font-medium transition cursor-pointer ${
+                          logLevelFilter === "all"
+                            ? "bg-amber-500 text-slate-950 font-bold"
+                            : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Alle ({RUN_160_WARNING_LOGS.length})
+                      </button>
+                      <button
+                        onClick={() => setLogLevelFilter("evt-req-parts-01")}
+                        className={`px-3 py-1 rounded-xl text-xs font-mono font-medium transition cursor-pointer ${
+                          logLevelFilter === "evt-req-parts-01"
+                            ? "bg-amber-500 text-slate-950 font-bold"
+                            : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Req #216 Page (20)
+                      </button>
+                      <button
+                        onClick={() => setLogLevelFilter("evt-req-parts-02")}
+                        className={`px-3 py-1 rounded-xl text-xs font-mono font-medium transition cursor-pointer ${
+                          logLevelFilter === "evt-req-parts-02"
+                            ? "bg-amber-500 text-slate-950 font-bold"
+                            : "bg-slate-950 border border-slate-800 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        Req #217 AJAX (24)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Logs list */}
+                  <div className="space-y-2 font-mono text-xs">
+                    {RUN_160_WARNING_LOGS.filter((l) => {
+                      if (logLevelFilter === "all") return true;
+                      return l.requestId === logLevelFilter;
+                    }).map((log) => (
+                      <div
+                        key={log.id}
+                        className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                              {log.level.toUpperCase()}
+                            </span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-400 border border-slate-700">
+                              {log.channel}
+                            </span>
+                            <span className="text-slate-400 text-[11px]">
+                              +{log.timeOffsetMs} ms
+                            </span>
+                          </div>
+
+                          {log.file && (
+                            <span className="text-slate-400 text-[11px]">
+                              {log.file}{log.line ? `:${log.line}` : ""}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="text-slate-200 font-medium pl-1">
+                          {log.message}
+                        </div>
+
+                        {log.context && (
+                          <div className="mt-1 p-2 rounded bg-slate-950/80 border border-slate-800/80 text-[11px] text-slate-400">
+                            <span className="text-slate-500">Context: </span>
+                            <code>{JSON.stringify(log.context)}</code>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

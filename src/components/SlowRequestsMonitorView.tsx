@@ -809,6 +809,39 @@ export const SlowRequestsMonitorView: React.FC<SlowRequestsMonitorViewProps> = (
         </div>
       </div>
 
+      {/* Active Run 160 Showcase Banner */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-slate-900/60 border border-amber-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0 shadow-inner">
+            <Zap className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono font-bold text-white text-sm">
+                Actieve Telemetry Run #160 (parts-regression)
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                13 nanoseconde markers geladen
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                1.255 Eloquent models
+              </span>
+            </div>
+            <p className="text-xs font-mono text-slate-400 mt-0.5">
+              Flowduur: 970ms · 134 queries (73 page + 61 AJAX) · 8 PHP code hotspots · 44 warnings
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => onInspectInProfiler("evt-req-parts-01")}
+          className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-mono font-bold flex items-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/20 shrink-0"
+        >
+          <span>Open in Request Profiler</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+
       {/* Health Ribbon: 4 sleek metrics in 1 compact row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="p-3.5 rounded-xl bg-[#0e1320] border border-slate-800/90 shadow-sm flex items-center justify-between">
